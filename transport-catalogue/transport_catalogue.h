@@ -3,20 +3,19 @@
 #include "geo.h"
 
 #include <deque>
-#include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
-namespace transport_catalogue{
+namespace transport_catalogue {
 
-struct Stop{
+struct Stop {
     std::string name;
     Coordinates coordinates;
-    std::set<std::string_view> buses;
 };
 
-struct Bus{
+struct Bus {
     std::string name;
     std::vector<const Stop*> route_stops;
 };
@@ -42,13 +41,14 @@ public:
 
     const BusRouteInfo GetBusInfo(const std::string_view bus_id) const;
 
-    const std::set<std::string_view> GetStopInfo(const std::string_view stop_id) const;
+    const std::unordered_set<std::string_view> GetStopInfo(const std::string_view stop_id) const;
 
 private:
     std::deque<Stop> stops_;
     std::deque<Bus> buses_;
     std::unordered_map<std::string_view, const Stop*> stopname_to_stop_;
     std::unordered_map<std::string_view, const Bus*> busname_to_bus_;
+    std::unordered_map<std::string_view, std::unordered_set<std::string_view>> buses_at_stop_;
 };
 
 }

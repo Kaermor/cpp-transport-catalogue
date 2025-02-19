@@ -6,8 +6,8 @@
 #include <string_view>
 #include <vector>
 
-namespace transport_catalogue{
-namespace input{
+namespace transport_catalogue {
+namespace input {
 
 struct CommandDescription {
     explicit operator bool() const {

@@ -3,8 +3,8 @@
 #include <cassert>
 #include <iterator>
 
-namespace transport_catalogue{
-namespace input{
+namespace transport_catalogue {
+namespace input {
 
 Coordinates ParseCoordinates(std::string_view str) {
     static const double nan = std::nan("");
@@ -92,15 +92,15 @@ void InputReader::ParseLine(std::string_view line) {
 
 void InputReader::ApplyCommands([[maybe_unused]] transport_catalogue::TransportCatalogue& catalogue) const {
     using namespace std::literals;
-    for(auto& c : commands_){
-        if(c.command == "Bus"s){
+    for (const auto& c : commands_) {
+        if (c.command == "Bus"s) {
             continue;
         }
         catalogue.AddStop(c.id, ParseCoordinates(c.description));
     }
 
-    for(auto& c : commands_){
-        if(c.command == "Stop"s){
+    for (const auto& c : commands_) {
+        if (c.command == "Stop"s) {
             continue;
         }
         catalogue.AddBus(c.id, ParseRoute(c.description));
