@@ -17,11 +17,12 @@ void TransportCatalogue::AddBus(const std::string& bus_id
     buses_.push_back({bus_id, result});
 
     for (const auto& stop : route_stops) {
-        if (!stopname_to_stop_.count(stop)) {
+        auto stop_presence = stopname_to_stop_.find(stop);
+        if (stop_presence == stopname_to_stop_.end()) {
             continue;
         }
-        result.push_back(const_cast<Stop*>(stopname_to_stop_.at(stop)));
-        buses_at_stop_[stopname_to_stop_.at(stop)->name].insert(buses_.back().name);
+        result.push_back(stop_presence->second);
+        buses_at_stop_[stop_presence->first].insert(buses_.back().name);
     }
 
     buses_.back().route_stops = std::move(result);
@@ -29,11 +30,19 @@ void TransportCatalogue::AddBus(const std::string& bus_id
 }
 
 const Stop* TransportCatalogue::GetStop(const std::string_view stop_name) const {
-    return stopname_to_stop_.count(stop_name) > 0 ? stopname_to_stop_.at(stop_name) : nullptr;
+    auto stop_presence = stopname_to_stop_.find(stop_name);
+    if (stop_presence == stopname_to_stop_.end()) {
+        return nullptr;
+    }
+    return stop_presence->second;
 }
 
 const Bus* TransportCatalogue::GetBus(const std::string_view bus_id) const {
-    return busname_to_bus_.count(bus_id) > 0 ? busname_to_bus_.at(bus_id) : nullptr;
+    auto bus_presence = busname_to_bus_.find(bus_id);
+    if (bus_presence == busname_to_bus_.end()) {
+        return nullptr;
+    }
+    return bus_presence->second;
 }
 
 const BusRouteInfo TransportCatalogue::GetBusInfo(const std::string_view bus_id) const {
@@ -57,7 +66,7 @@ const BusRouteInfo TransportCatalogue::GetBusInfo(const std::string_view bus_id)
     return result;
 }
 
-const std::unordered_set<std::string_view> TransportCatalogue::GetStopInfo(const std::string_view stop_name) const {
+const std::unordered_set<std::string_view>& TransportCatalogue::GetStopInfo(const std::string_view stop_name) const {
     static const std::unordered_set<std::string_view> dummy;
     auto result = buses_at_stop_.find(stop_name);
     if (result == buses_at_stop_.end()) {

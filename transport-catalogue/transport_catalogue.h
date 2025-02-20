@@ -41,7 +41,7 @@ public:
 
     const BusRouteInfo GetBusInfo(const std::string_view bus_id) const;
 
-    const std::unordered_set<std::string_view> GetStopInfo(const std::string_view stop_id) const;
+    const std::unordered_set<std::string_view>& GetStopInfo(const std::string_view stop_id) const;
 
 private:
     std::deque<Stop> stops_;
