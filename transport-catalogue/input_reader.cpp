@@ -24,6 +24,29 @@ Coordinates ParseCoordinates(std::string_view str) {
     return {lat, lng};
 }
 
+std::unordered_map<std::string, uint32_t> ParseStopDistance(std::string_view line) {
+    std::unordered_map<std::string, uint32_t> result;
+    auto not_space = line.find_first_not_of(' ');
+    auto comma_pos = line.find(',', not_space + 1);
+    auto space_pos = line.find_first_of(' ', not_space);
+    bool is_first = true;
+    while (not_space != line.npos) {
+        if(!is_first) {
+            not_space = line.find_first_not_of(' ', comma_pos + 1);
+            comma_pos = line.find(',', not_space + 1);
+            space_pos = line.find_first_of(' ', not_space);
+        }
+        uint32_t distance = std::stoi(std::string(line.substr(not_space, space_pos - 1)));
+            not_space = line.find_first_not_of(' ', space_pos);
+            space_pos = line.find_first_of(' ', not_space);
+            not_space = line.find_first_not_of(' ', space_pos);
+            result.insert({std::string(line.substr(not_space, comma_pos - not_space)), distance});
+            is_first = false;
+            not_space = comma_pos;
+    }
+    return result;
+}
+
 std::string_view Trim(std::string_view string) {
     const auto start = string.find_first_not_of(' ');
     if (start == string.npos) {
@@ -83,6 +106,24 @@ CommandDescription ParseCommandDescription(std::string_view line) {
             std::string(line.substr(colon_pos + 1))};
 }
 
+StopDescription ParseStopDescription(std::string_view line) {
+    StopDescription result;
+    auto comma_pos = line.find(',');
+    if (comma_pos == line.npos) {
+        return result;
+    }
+
+    auto comma2_pos = line.find(',', comma_pos + 1);
+    result.coordinates = ParseCoordinates(line.substr(0, comma2_pos));
+    if (comma2_pos == line.npos) {
+        return result;
+    }
+
+    result.stop2stop_distances = ParseStopDistance(line.substr(comma2_pos + 1));
+
+    return result;
+}
+
 void InputReader::ParseLine(std::string_view line) {
     auto command_description = ParseCommandDescription(line);
     if (command_description) {
@@ -92,11 +133,21 @@ void InputReader::ParseLine(std::string_view line) {
 
 void InputReader::ApplyCommands([[maybe_unused]] transport_catalogue::TransportCatalogue& catalogue) const {
     using namespace std::literals;
+    std::vector<StopDescription> all_stops_description;
     for (const auto& c : commands_) {
         if (c.command == "Bus"s) {
             continue;
         }
-        catalogue.AddStop(c.id, ParseCoordinates(c.description));
+        StopDescription stop_description = ParseStopDescription(c.description);
+        stop_description.stop_name = c.id;
+        catalogue.AddStop(stop_description.stop_name, stop_description.coordinates);
+        all_stops_description.push_back(stop_description);
+    }
+
+    for (const auto& stop_desc : all_stops_description) {
+        for (const auto& [stop_to, distance] : stop_desc.stop2stop_distances) {
+            catalogue.AddStop2StopDistance(stop_desc.stop_name, stop_to, distance);
+        }
     }
 
     for (const auto& c : commands_) {
@@ -107,5 +158,5 @@ void InputReader::ApplyCommands([[maybe_unused]] transport_catalogue::TransportC
     }
 }
 
-}
-}
+} // namespace input
+} // namespace transport_catalogue

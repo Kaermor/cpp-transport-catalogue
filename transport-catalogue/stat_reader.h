@@ -10,5 +10,5 @@ namespace output {
 
 void ParseAndPrintStat(const transport_catalogue::TransportCatalogue& transport_catalogue, std::string_view request, std::ostream& output);
 
-}
-}
+} // namespace output
+} // namespace transport_catalogue

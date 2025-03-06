@@ -25,7 +25,9 @@ void PrintStatBus(const transport_catalogue::TransportCatalogue& transport_catal
            << " unique stops, "s
            << std::setprecision(6)
            << bus_route_info.route_length
-           << " route length"s
+           << " route length, "s
+           << bus_route_info.curvature
+           << " curvature"s
            << std::endl;
 }
 
@@ -68,5 +70,5 @@ void ParseAndPrintStat(const transport_catalogue::TransportCatalogue& transport_
     }
 }
 
-}
-}
+} // namespace output
+} // namespace transport_catalogue

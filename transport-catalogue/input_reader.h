@@ -2,6 +2,7 @@
 
 #include "transport_catalogue.h"
 
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -23,6 +24,12 @@ struct CommandDescription {
     std::string description;
 };
 
+struct StopDescription {
+    std::string stop_name;
+    Coordinates coordinates;
+    std::unordered_map<std::string, uint32_t> stop2stop_distances;
+};
+
 std::string_view Trim(std::string_view string);
 
 std::vector<std::string_view> Split(std::string_view string, char delim);
@@ -37,5 +44,5 @@ private:
     std::vector<CommandDescription> commands_;
 };
 
-}
-}
+} // namespace input
+} // namespace transport_catalogue
