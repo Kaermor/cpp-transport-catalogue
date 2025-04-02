@@ -13,12 +13,13 @@ size_t Stop2StopHasher::operator() (const std::pair<const Stop*, const Stop*>& s
 }
 
 void TransportCatalogue::AddStop(const std::string& stop_name
-                                 , const Coordinates& coordinates) {
+                                 , const geo::Coordinates& coordinates) {
     stops_.push_back({stop_name, coordinates});
     stopname_to_stop_[stops_.back().name] = &stops_.back();
 }
 
-void TransportCatalogue::AddStop2StopDistance(const std::string_view stop_from, const std::string_view stop_to, uint32_t distance){
+void TransportCatalogue::SetStop2StopDistance(const std::string_view stop_from
+                                            , const std::string_view stop_to, int distance){
         auto stop_presence = stopname_to_stop_.find(stop_from);
         auto to_stop_presence = stopname_to_stop_.find(stop_to);
         if (stop_presence != stopname_to_stop_.end()
@@ -30,10 +31,11 @@ void TransportCatalogue::AddStop2StopDistance(const std::string_view stop_from, 
 }
 
 void TransportCatalogue::AddBus(const std::string& bus_id
-                                , const std::vector<std::string_view>& route_stops) {
+                                , const std::vector<std::string_view>& route_stops
+                                , bool is_roundtrip) {
     std::vector<const Stop*> result;
     result.reserve(route_stops.size());
-    buses_.push_back({bus_id, result});
+    buses_.push_back({bus_id, result, is_roundtrip});
 
     for (const auto& stop : route_stops) {
         auto stop_presence = stopname_to_stop_.find(stop);
@@ -72,18 +74,37 @@ const BusRouteInfo TransportCatalogue::GetBusInfo(const std::string_view bus_id)
         return result;
     }
 
-    result.stops_count = bus_ptr->route_stops.size();
+    double route_geo_length = 0.0;
+    result.stops_count = static_cast<int>(bus_ptr->route_stops.size());
     std::unordered_set<const Stop*> unique_stops(bus_ptr->route_stops.begin()
                                                   , bus_ptr->route_stops.end());
-    result.unique_stops = unique_stops.size();
+    result.unique_stops = static_cast<int>(unique_stops.size());
 
-    double route_geo_length = 0.0;
+    if(!bus_ptr->is_roundtrip) {
+        
+        for (size_t i = 1; i < static_cast<size_t>(result.stops_count); ++i) {
+            result.route_length += ComputeRealDistance(bus_ptr->route_stops[i-1]
+                                                       , bus_ptr->route_stops[i]);
+            route_geo_length += ComputeGeoDistance(bus_ptr->route_stops[i]->coordinates
+                                                , bus_ptr->route_stops[i-1]->coordinates);
+        }
 
-    for (size_t i = 1; i < result.stops_count; ++i) {
-        result.route_length += ComputeRealDistance(bus_ptr->route_stops[i-1]
-                                                   , bus_ptr->route_stops[i]);
-        route_geo_length += ComputeGeoDistance(bus_ptr->route_stops[i]->coordinates
-                                            , bus_ptr->route_stops[i-1]->coordinates);
+        for (size_t i = static_cast<size_t>(result.stops_count) - 1; i > 0; --i) {
+            result.route_length += ComputeRealDistance(bus_ptr->route_stops[i]
+                                                       , bus_ptr->route_stops[i-1]);
+            route_geo_length += ComputeGeoDistance(bus_ptr->route_stops[i]->coordinates
+                                                , bus_ptr->route_stops[i-1]->coordinates);
+        }
+        
+        result.stops_count = static_cast<int>(bus_ptr->route_stops.size()) * 2 - 1;
+    } else {
+
+        for (size_t i = 1; i < static_cast<size_t>(result.stops_count); ++i) {
+            result.route_length += ComputeRealDistance(bus_ptr->route_stops[i-1]
+                                                    , bus_ptr->route_stops[i]);
+            route_geo_length += ComputeGeoDistance(bus_ptr->route_stops[i]->coordinates
+                                                , bus_ptr->route_stops[i-1]->coordinates);
+        }
     }
 
     result.curvature = result.route_length / route_geo_length;
@@ -91,7 +112,8 @@ const BusRouteInfo TransportCatalogue::GetBusInfo(const std::string_view bus_id)
     return result;
 }
 
-const std::unordered_set<std::string_view>& TransportCatalogue::GetStopInfo(const std::string_view stop_name) const {
+const std::unordered_set<std::string_view>& TransportCatalogue::GetStopInfo(
+                                        const std::string_view stop_name) const {
     static const std::unordered_set<std::string_view> dummy;
     auto result = buses_at_stop_.find(stop_name);
     if (result == buses_at_stop_.end()) {
@@ -100,7 +122,11 @@ const std::unordered_set<std::string_view>& TransportCatalogue::GetStopInfo(cons
     return result->second;
 }
 
-uint32_t TransportCatalogue::ComputeRealDistance(const Stop* stop_from, const Stop* stop_to) const {
+const std::unordered_map<std::string_view, const Bus*>& TransportCatalogue::GetAllBuses() const {
+    return busname_to_bus_;
+}
+
+int TransportCatalogue::ComputeRealDistance(const Stop* stop_from, const Stop* stop_to) const {
     auto it = stop2stop_distances_.find({stop_from, stop_to});
     if (it != stop2stop_distances_.end()) {
         return it->second;
