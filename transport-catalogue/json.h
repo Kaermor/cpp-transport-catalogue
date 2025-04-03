@@ -17,16 +17,10 @@ public:
     using runtime_error::runtime_error;
 };
 
-class Node final {
+class Node final : private std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>{
 public:
-    using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
-   
-    template<typename ValueType>
-    Node(ValueType value)
-        : value_(value) {}
-    
-    Node()
-        : value_(nullptr) {}
+    using variant::variant;
+    using Value = variant;
    
     bool IsInt() const;
     bool IsPureDouble() const;
@@ -48,9 +42,6 @@ public:
 
     bool operator==(const Node& other) const;
     bool operator!=(const Node& other) const;
-
-private:
-    Value value_ = nullptr;
 };
 
 class Document {

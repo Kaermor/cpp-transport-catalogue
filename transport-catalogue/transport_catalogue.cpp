@@ -83,14 +83,14 @@ const BusRouteInfo TransportCatalogue::GetBusInfo(const std::string_view bus_id)
     if(!bus_ptr->is_roundtrip) {
         
         for (size_t i = 1; i < static_cast<size_t>(result.stops_count); ++i) {
-            result.route_length += ComputeRealDistance(bus_ptr->route_stops[i-1]
+            result.route_length += GetRealDistance(bus_ptr->route_stops[i-1]
                                                        , bus_ptr->route_stops[i]);
             route_geo_length += ComputeGeoDistance(bus_ptr->route_stops[i]->coordinates
                                                 , bus_ptr->route_stops[i-1]->coordinates);
         }
 
         for (size_t i = static_cast<size_t>(result.stops_count) - 1; i > 0; --i) {
-            result.route_length += ComputeRealDistance(bus_ptr->route_stops[i]
+            result.route_length += GetRealDistance(bus_ptr->route_stops[i]
                                                        , bus_ptr->route_stops[i-1]);
             route_geo_length += ComputeGeoDistance(bus_ptr->route_stops[i]->coordinates
                                                 , bus_ptr->route_stops[i-1]->coordinates);
@@ -100,7 +100,7 @@ const BusRouteInfo TransportCatalogue::GetBusInfo(const std::string_view bus_id)
     } else {
 
         for (size_t i = 1; i < static_cast<size_t>(result.stops_count); ++i) {
-            result.route_length += ComputeRealDistance(bus_ptr->route_stops[i-1]
+            result.route_length += GetRealDistance(bus_ptr->route_stops[i-1]
                                                     , bus_ptr->route_stops[i]);
             route_geo_length += ComputeGeoDistance(bus_ptr->route_stops[i]->coordinates
                                                 , bus_ptr->route_stops[i-1]->coordinates);
@@ -126,12 +126,16 @@ const std::unordered_map<std::string_view, const Bus*>& TransportCatalogue::GetA
     return busname_to_bus_;
 }
 
-int TransportCatalogue::ComputeRealDistance(const Stop* stop_from, const Stop* stop_to) const {
-    auto it = stop2stop_distances_.find({stop_from, stop_to});
-    if (it != stop2stop_distances_.end()) {
-        return it->second;
+int TransportCatalogue::GetRealDistance(const Stop* stop_from, const Stop* stop_to) const {
+    auto it_forw = stop2stop_distances_.find({stop_from, stop_to});
+    if (it_forw != stop2stop_distances_.end()) {
+        return it_forw->second;
     }
-    return stop2stop_distances_.find({stop_to, stop_from})->second;
+    auto it_backw = stop2stop_distances_.find({stop_to, stop_from});
+    if (it_backw != stop2stop_distances_.end()) {
+        return it_backw->second;
+    }
+    return 0;
 }
 
 } // namespace transport_catalogue

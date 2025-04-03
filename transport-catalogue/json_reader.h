@@ -37,13 +37,13 @@ public:
     void FillBuses(transport_catalogue::TransportCatalogue& catalogue);    
     void FillTransportCatalogue(transport_catalogue::TransportCatalogue& catalogue);
 
+    svg::Color GetColorInRightFormat(const json::Node& color_setting) const;
     map_renderer::MapRenderer SetRenderSettings(const json::Dict& render_settings) const;
 
     const json::Node ProcessBusRequest(const json::Dict& request, RequestHandler& rh) const;
     const json::Node ProcessStopRequest(const json::Dict& request, RequestHandler& rh) const;
     const json::Node ProcessMapRequest(const json::Dict& request, RequestHandler& rh) const;   
     void ProcessRequests(const json::Node& stat_requests, RequestHandler& rh) const;
-
 
 private:
     json::Document doc_;

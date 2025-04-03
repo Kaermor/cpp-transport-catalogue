@@ -60,7 +60,8 @@ std::vector<svg::Text> MapRenderer::CreateSvgBusLabels(
         svg::Text bus_underlayer;
         bus_label.SetPosition(sp(bus->route_stops[0]->coordinates));
         bus_label.SetOffset(render_settings_.bus_label_offset);
-        bus_label.SetFontSize(render_settings_.bus_label_font_size);
+        bus_label.SetFontSize(
+                    static_cast<uint32_t>(render_settings_.bus_label_font_size));
         bus_label.SetFontFamily("Verdana");
         bus_label.SetFontWeight("bold");
         bus_label.SetData(bus->name);
@@ -70,7 +71,8 @@ std::vector<svg::Text> MapRenderer::CreateSvgBusLabels(
 
         bus_underlayer.SetPosition(sp(bus->route_stops[0]->coordinates));
         bus_underlayer.SetOffset(render_settings_.bus_label_offset);
-        bus_underlayer.SetFontSize(render_settings_.bus_label_font_size);
+        bus_underlayer.SetFontSize(
+                    static_cast<uint32_t>(render_settings_.bus_label_font_size));
         bus_underlayer.SetFontFamily("Verdana");
         bus_underlayer.SetFontWeight("bold");
         bus_underlayer.SetData(bus->name);
@@ -127,14 +129,16 @@ std::vector<svg::Text> MapRenderer::CreateSvgBusLabels(
         for (const auto& [stop_name, stop] : all_routes_stops) {
             stop_label.SetPosition(sp(stop->coordinates));
             stop_label.SetOffset(render_settings_.stop_label_offset);
-            stop_label.SetFontSize(render_settings_.stop_label_font_size);
+            stop_label.SetFontSize(
+                    static_cast<uint32_t>(render_settings_.stop_label_font_size));
             stop_label.SetFontFamily("Verdana");
             stop_label.SetData(stop->name);
             stop_label.SetFillColor("black");
     
             stop_underlayer.SetPosition(sp(stop->coordinates));
             stop_underlayer.SetOffset(render_settings_.stop_label_offset);
-            stop_underlayer.SetFontSize(render_settings_.stop_label_font_size);
+            stop_underlayer.SetFontSize(
+                    static_cast<uint32_t>(render_settings_.stop_label_font_size));
             stop_underlayer.SetFontFamily("Verdana");
             stop_underlayer.SetData(stop->name);
             stop_underlayer.SetFillColor(render_settings_.underlayer_color);

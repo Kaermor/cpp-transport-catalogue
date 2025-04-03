@@ -38,7 +38,7 @@ public:
 
     const std::unordered_map<std::string_view, const Bus*>& GetAllBuses() const;
 
-    int ComputeRealDistance(const Stop* stop_from, const Stop* stop_to) const;
+    int GetRealDistance(const Stop* stop_from, const Stop* stop_to) const;
 
 private:
     std::deque<Stop> stops_;
@@ -47,8 +47,7 @@ private:
     std::unordered_map<std::string_view, const Bus*> busname_to_bus_;
     std::unordered_map<std::string_view, std::unordered_set<std::string_view>> buses_at_stop_;
     std::unordered_map<std::pair<const Stop*, const Stop*>, int, Stop2StopHasher> stop2stop_distances_;
-
-    
+ 
 };
 
 } // namespace transport_catalogue
