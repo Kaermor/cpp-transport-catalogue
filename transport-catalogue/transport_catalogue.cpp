@@ -126,6 +126,10 @@ const std::unordered_map<std::string_view, const Bus*>& TransportCatalogue::GetA
     return busname_to_bus_;
 }
 
+const std::unordered_map<std::string_view, const Stop*>& TransportCatalogue::GetAllStops() const {
+    return stopname_to_stop_;
+}
+
 int TransportCatalogue::GetRealDistance(const Stop* stop_from, const Stop* stop_to) const {
     auto it_forw = stop2stop_distances_.find({stop_from, stop_to});
     if (it_forw != stop2stop_distances_.end()) {

@@ -31,18 +31,22 @@ public:
     const json::Node& GetBaseRequests() const;
     const json::Node& GetRenderSettings() const;
     const json::Node& GetStatRequests() const;
+    const json::Node& GetRoutingSettings() const; //NEW
 
     void FillStops(transport_catalogue::TransportCatalogue& catalogue);
     void SetStopsDistances(transport_catalogue::TransportCatalogue& catalogue);
     void FillBuses(transport_catalogue::TransportCatalogue& catalogue);    
     void FillTransportCatalogue(transport_catalogue::TransportCatalogue& catalogue);
 
+    transport_router::RoutingSettings SetRoutingSettings(const json::Node& routing_settings) const;
+
     svg::Color GetColorInRightFormat(const json::Node& color_setting) const;
-    map_renderer::MapRenderer SetRenderSettings(const json::Dict& render_settings) const;
+    map_renderer::MapRenderer SetRenderSettings(const json::Node& render_settings) const;
 
     const json::Node ProcessBusRequest(const json::Dict& request, RequestHandler& rh) const;
     const json::Node ProcessStopRequest(const json::Dict& request, RequestHandler& rh) const;
-    const json::Node ProcessMapRequest(const json::Dict& request, RequestHandler& rh) const;   
+    const json::Node ProcessMapRequest(const json::Dict& request, RequestHandler& rh) const;
+    const json::Node ProcessRouteRequest(const json::Dict& request, RequestHandler& rh) const;   
     void ProcessRequests(const json::Node& stat_requests, RequestHandler& rh) const;
 
 private:

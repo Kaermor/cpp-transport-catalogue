@@ -38,6 +38,8 @@ public:
 
     const std::unordered_map<std::string_view, const Bus*>& GetAllBuses() const;
 
+    const std::unordered_map<std::string_view, const Stop*>& GetAllStops() const;
+
     int GetRealDistance(const Stop* stop_from, const Stop* stop_to) const;
 
 private:

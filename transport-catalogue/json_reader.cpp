@@ -19,6 +19,10 @@ const json::Node& JsonReader::GetStatRequests() const {
     return doc_.GetRoot().AsDict().at("stat_requests");
 }
 
+const json::Node& JsonReader::GetRoutingSettings() const {
+    return doc_.GetRoot().AsDict().at("routing_settings");
+}
+
 void JsonReader::FillStops(transport_catalogue::TransportCatalogue& catalogue) {
     const json::Array& base_requests = GetBaseRequests().AsArray();
     for (const auto& request : base_requests) {
@@ -112,33 +116,43 @@ svg::Color JsonReader::GetColorInRightFormat(const json::Node& color_setting) co
     return result_color;
 }
 
-map_renderer::MapRenderer JsonReader::SetRenderSettings(const json::Dict& render_settings) const {
+map_renderer::MapRenderer JsonReader::SetRenderSettings(const json::Node& render_settings) const {
     map_renderer::RenderSettings result_settings;
-    result_settings.width = render_settings.at("width").AsDouble();
-    result_settings.height = render_settings.at("height").AsDouble();
-    result_settings.padding = render_settings.at("padding").AsDouble();
-    result_settings.line_width = render_settings.at("line_width").AsDouble();
-    result_settings.stop_radius = render_settings.at("stop_radius").AsDouble();
-    result_settings.bus_label_font_size = render_settings.at("bus_label_font_size").AsInt();
-    result_settings.bus_label_offset = {render_settings.at("bus_label_offset")
+    json::Dict render_settings_dict = render_settings.AsDict();
+    result_settings.width = render_settings_dict.at("width").AsDouble();
+    result_settings.height = render_settings_dict.at("height").AsDouble();
+    result_settings.padding = render_settings_dict.at("padding").AsDouble();
+    result_settings.line_width = render_settings_dict.at("line_width").AsDouble();
+    result_settings.stop_radius = render_settings_dict.at("stop_radius").AsDouble();
+    result_settings.bus_label_font_size = render_settings_dict.at("bus_label_font_size").AsInt();
+    result_settings.bus_label_offset = {render_settings_dict.at("bus_label_offset")
                                                             .AsArray()[0].AsDouble()
-                                        , render_settings.at("bus_label_offset")
+                                        , render_settings_dict.at("bus_label_offset")
                                                             .AsArray()[1].AsDouble()};
-    result_settings.stop_label_font_size = render_settings.at("stop_label_font_size").AsInt();
-    result_settings.stop_label_offset = {render_settings.at("stop_label_offset")
+    result_settings.stop_label_font_size = render_settings_dict.at("stop_label_font_size").AsInt();
+    result_settings.stop_label_offset = {render_settings_dict.at("stop_label_offset")
                                                             .AsArray()[0].AsDouble()
-                                        , render_settings.at("stop_label_offset")
+                                        , render_settings_dict.at("stop_label_offset")
                                                             .AsArray()[1].AsDouble()};
     result_settings.underlayer_color
-                    = GetColorInRightFormat(render_settings.at("underlayer_color"));
-    result_settings.underlayer_width = render_settings.at("underlayer_width").AsDouble();
+                    = GetColorInRightFormat(render_settings_dict.at("underlayer_color"));
+    result_settings.underlayer_width = render_settings_dict.at("underlayer_width").AsDouble();
 
-    const auto& color_palette = render_settings.at("color_palette").AsArray();
+    const auto& color_palette = render_settings_dict.at("color_palette").AsArray();
     
     for (const auto& color : color_palette) {
         result_settings.color_palette.push_back(GetColorInRightFormat(color));
     }
     
+    return result_settings;
+}
+
+transport_router::RoutingSettings JsonReader::SetRoutingSettings(const json::Node& routing_settings) const {
+    transport_router::RoutingSettings result_settings;
+    json::Dict routing_settings_dict = routing_settings.AsDict();
+    double kmph_to_mpm = 1000.0 / 60.0;
+    result_settings.bus_velocity = routing_settings_dict.at("bus_velocity").AsDouble() * kmph_to_mpm;
+    result_settings.bus_wait_time = routing_settings_dict.at("bus_wait_time").AsInt();
     return result_settings;
 }
 
@@ -159,6 +173,7 @@ const json::Node JsonReader::ProcessBusRequest(const json::Dict& request
                 .Build();
     return result;
 }
+
 
 const json::Node JsonReader::ProcessStopRequest(const json::Dict& request
                                                 , RequestHandler& rh) const {
@@ -199,6 +214,53 @@ const json::Node JsonReader::ProcessMapRequest(const json::Dict& map_request
     return result;
 }
 
+const json::Node JsonReader::ProcessRouteRequest(const json::Dict& request
+                                                , RequestHandler& rh) const {
+    const auto route = rh.GetOptimalRoute(request.at("from").AsString()
+                                            , request.at("to").AsString());
+    if (!route) {
+        return ProcessErrorRequest(request.at("id").AsInt());
+    }
+
+    json::Array items_array;
+    double total_time = 0.0;
+    for (const auto& item_edge : route.value().edges) {
+        const graph::Edge<double> edge = rh.GetRouterGraph().GetEdge(item_edge);
+            if (edge.span_count == 0) {
+                items_array.emplace_back(json::Node(json::Builder{}
+                    .StartDict()
+                        .Key("stop_name"s).Value(edge.name)
+                        .Key("time"s).Value(edge.weight)
+                        .Key("type"s).Value("Wait"s)
+                    .EndDict()
+                .Build()));
+
+                total_time += edge.weight;
+            }
+            else {
+                items_array.emplace_back(json::Node(json::Builder{}
+                    .StartDict()
+                        .Key("bus"s).Value(edge.name)
+                        .Key("span_count"s).Value(static_cast<int>(edge.span_count))
+                        .Key("time"s).Value(edge.weight)
+                        .Key("type"s).Value("Bus"s)
+                    .EndDict()
+                .Build()));
+
+                total_time += edge.weight;
+            }
+    }
+    json::Node result = json::Builder{}
+    .StartDict()
+        .Key("request_id"s).Value(request.at("id"s).AsInt())
+        .Key("total_time"s).Value(total_time)
+        .Key("items"s).Value(items_array)
+    .EndDict()
+    .Build();
+
+    return result;
+}
+
 void JsonReader::ProcessRequests(const json::Node& stat_requests
                                     , RequestHandler& rh) const {
     json::Array result;                                
@@ -215,6 +277,9 @@ void JsonReader::ProcessRequests(const json::Node& stat_requests
             }
             if (request_typed.at("type").AsString() == "Map") {
                 result.emplace_back(ProcessMapRequest(request_typed, rh));
+            }
+            if (request_typed.at("type").AsString() == "Route") {
+                result.emplace_back(ProcessRouteRequest(request_typed, rh));
             }
         }
     }
