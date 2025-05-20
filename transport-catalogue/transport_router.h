@@ -16,21 +16,15 @@ struct RoutingSettings {
 class TransportRouter {
 public:
     TransportRouter() = default;
-    TransportRouter(const RoutingSettings& routing_settings)
-        : routing_settings_(routing_settings) {}
     TransportRouter(const transport_catalogue::TransportCatalogue& catalogue
                     , const RoutingSettings& routing_settings) {
         routing_settings_ = routing_settings;
-        graph_ = BuildGraph(catalogue);
+        BuildGraph(catalogue);
     }
 
-    const graph::DirectedWeightedGraph<double>& BuildGraph(
-                                            const transport_catalogue::TransportCatalogue& catalogue);
-    const std::optional<graph::Router<double>::RouteInfo> FindRoute(
-                                            const std::string_view from
-                                            , const std::string_view to) const;
-    const graph::DirectedWeightedGraph<double>& GetGraph() const;
-
+    const std::optional<std::vector<graph::Edge<double>>> FindRoute (
+                                                const std::string_view stop_from
+                                                , const std::string_view stop_to) const;
 
 private:
     RoutingSettings routing_settings_;
@@ -40,6 +34,6 @@ private:
 
     void FillVertexes(const transport_catalogue::TransportCatalogue& catalogue);
     void FillEdges(const transport_catalogue::TransportCatalogue& catalogue);
+    void BuildGraph(const transport_catalogue::TransportCatalogue& catalogue);
 };
-
 } // namespace transport_router

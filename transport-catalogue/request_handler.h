@@ -20,10 +20,9 @@ RequestHandler(const transport_catalogue::TransportCatalogue& catalogue
                                         const std::string_view& bus_name) const;
     const std::unordered_set<std::string_view>& GetBusesByStop(
                                         const std::string_view& stop_name) const;
-    const std::optional<graph::Router<double>::RouteInfo> GetOptimalRoute(
+    const std::optional<std::vector<graph::Edge<double>>> GetOptimalRoute(
                                                                         const std::string_view stop_from
                                                                         , const std::string_view stop_to) const;
-    const graph::DirectedWeightedGraph<double>& GetRouterGraph() const;
     svg::Document RenderMap() const;
 
 private:
@@ -31,4 +30,3 @@ private:
     const map_renderer::MapRenderer& renderer_;
     const transport_router::TransportRouter& router_;
 };
-

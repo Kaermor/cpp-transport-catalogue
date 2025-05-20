@@ -55,22 +55,31 @@ void TransportRouter::FillEdges(const transport_catalogue::TransportCatalogue& c
     }
 }
 
-const graph::DirectedWeightedGraph<double>& TransportRouter::BuildGraph(
+void TransportRouter::BuildGraph(
                     const transport_catalogue::TransportCatalogue& catalogue) {
     FillVertexes(catalogue);
     FillEdges(catalogue);
     router_ = std::make_unique<graph::Router<double>>(graph_);
-    return graph_;
 }
 
-const std::optional<graph::Router<double>::RouteInfo> TransportRouter::FindRoute(
-                                                        const std::string_view stop_from
-                                                        , const std::string_view stop_to) const {
-	return router_->BuildRoute(stop_to_vertex_ids_.at(stop_from)
-                                , stop_to_vertex_ids_.at(stop_to));
-}
+const std::optional<std::vector<graph::Edge<double>>> TransportRouter::FindRoute (
+                                                    const std::string_view stop_from
+                                                    , const std::string_view stop_to) const {
+const auto route = router_->BuildRoute(stop_to_vertex_ids_.at(stop_from)
+                                        , stop_to_vertex_ids_.at(stop_to));
+    if (!route) {
+        return std::nullopt;
+    }
 
-const graph::DirectedWeightedGraph<double>& TransportRouter::GetGraph() const {
-	return graph_;
+    std::optional<std::vector<graph::Edge<double>>> result
+                                            = std::vector<graph::Edge<double>>{};
+    result->reserve(route.value().edges.size());
+
+    for (const auto& item_edge : route.value().edges) {
+        const graph::Edge<double> edge = graph_.GetEdge(item_edge);
+        result->push_back(edge);
+    }
+
+    return result;
 }
 } // namespace transport_router

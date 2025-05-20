@@ -31,7 +31,7 @@ public:
     const json::Node& GetBaseRequests() const;
     const json::Node& GetRenderSettings() const;
     const json::Node& GetStatRequests() const;
-    const json::Node& GetRoutingSettings() const; //NEW
+    const json::Node& GetRoutingSettings() const;
 
     void FillStops(transport_catalogue::TransportCatalogue& catalogue);
     void SetStopsDistances(transport_catalogue::TransportCatalogue& catalogue);
@@ -52,5 +52,4 @@ public:
 private:
     json::Document doc_;
 };
-
 }  // namespace json_reader
