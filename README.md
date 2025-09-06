@@ -1,9 +1,11 @@
-# cpp-transport-catalogue
-Transport catalogue.
+# Transport catalogue
+
+All about bus routes in big city. A program that stores and processes information about bus stops and buses.
 
 - Accepts JSON data as input and returns an SVG file that visualizes stops and routes.
 - Finds the shortest route between stops.
 - Finds information about buses passing through the selected stop.
+- Finds information about route (length, stops, curvature)
 - Implemented a JSON constructor that allows finding an incorrect sequence of methods at compile.
 
 ## Input data format
